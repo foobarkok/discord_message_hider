@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Discord Message Hider - 管理</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <header class="page-header">
+    <div>
+      <h1>Discord Message Hider</h1>
+      <p>非表示にしたメッセージの管理</p>
+    </div>
+    <div class="header-actions">
+      <button id="export" type="button">JSONをエクスポート</button>
+      <button id="import" type="button">JSONをインポート</button>
+      <input id="import-file" type="file" accept="application/json,.json" hidden>
+    </div>
+  </header>
+
+  <main>
+    <section class="settings card">
+      <h2>表示設定</h2>
+      <label class="radio-line">
+        <input type="radio" name="display" value="none">
+        <span><strong>完全に非表示</strong><small>デフォルト。通常の非表示メッセージを画面から消します。</small></span>
+      </label>
+      <label class="radio-line">
+        <input type="radio" name="display" value="placeholder">
+        <span><strong>「[非表示の発言]」と表示</strong><small>通常の非表示メッセージの場所にプレースホルダーを残します。</small></span>
+      </label>
+      <p class="note">引用・返信プレビュー内の非表示メッセージは、この設定に関係なく「[非表示の発言]」へ置換します。</p>
+    </section>
+
+    <section class="toolbar card">
+      <div class="toolbar-row">
+        <input id="search" type="search" placeholder="本文・ユーザー名・チャンネル名で検索">
+        <select id="sort">
+          <option value="newest">新しく非表示にした順</option>
+          <option value="oldest">古い順</option>
+          <option value="channel">チャンネル名順</option>
+          <option value="author">ユーザー名順</option>
+        </select>
+      </div>
+      <div class="toolbar-row secondary">
+        <span><strong id="visible-count">0</strong> / <span id="total-count">0</span>件を表示</span>
+        <div>
+          <button id="unhide-selected" type="button" disabled>選択したものを非表示リストから外す</button>
+          <button id="clear-all" type="button" class="danger" disabled>すべて解除</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="list" class="list" aria-live="polite"></section>
+  </main>
+
+  <template id="message-template">
+    <article class="message-card card">
+      <label class="select-box"><input class="select-message" type="checkbox"></label>
+      <div class="message-main">
+        <div class="meta">
+          <span class="channel"></span>
+          <span class="separator">·</span>
+          <span class="author"></span>
+          <span class="separator">·</span>
+          <time class="hidden-at"></time>
+        </div>
+        <pre class="content"></pre>
+        <div class="attachments"></div>
+        <div class="id-line">Message ID: <code class="message-id"></code></div>
+      </div>
+      <button class="unhide-one" type="button">解除</button>
+    </article>
+  </template>
+
+  <script src="options.js"></script>
+</body>
+</html>

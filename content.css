@@ -1,0 +1,83 @@
+.dmh-hidden-message {
+  display: none !important;
+}
+
+.dmh-placeholder-mode.dmh-hidden-message {
+  display: block !important;
+  position: relative !important;
+  min-height: 24px !important;
+  box-sizing: border-box !important;
+  padding: 4px 8px !important;
+}
+
+.dmh-placeholder-mode.dmh-hidden-message > * {
+  visibility: hidden !important;
+}
+
+.dmh-placeholder-mode.dmh-hidden-message::before {
+  content: "[非表示の発言]";
+  display: block;
+  visibility: visible !important;
+  color: var(--text-muted, #b5bac1);
+  font-size: 14px;
+  line-height: 20px;
+  font-style: italic;
+  pointer-events: none;
+}
+
+.dmh-quote-hidden {
+  position: relative !important;
+}
+
+.dmh-quote-hidden > * {
+  visibility: hidden !important;
+}
+
+.dmh-quote-hidden::after {
+  content: "[非表示の発言]";
+  display: block;
+  visibility: visible !important;
+  color: var(--text-muted, #b5bac1);
+  font-size: 13px;
+  line-height: 18px;
+  font-style: italic;
+  padding: 2px 0;
+  pointer-events: none;
+}
+
+.dmh-context-menu {
+  position: fixed;
+  z-index: 2147483647;
+  min-width: 220px;
+  padding: 6px;
+  border-radius: 6px;
+  background: var(--background-floating, #111214);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 35%);
+  font-family: var(--font-primary, "gg sans", "Noto Sans", sans-serif);
+  color: var(--text-normal, #dbdee1);
+}
+
+.dmh-context-menu[hidden] {
+  display: none !important;
+}
+
+.dmh-context-menu button {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-radius: 3px;
+  padding: 8px 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dmh-context-menu button:hover {
+  background: var(--background-modifier-hover, #404249);
+}
+
+.dmh-context-menu button.danger {
+  color: var(--text-danger, #f23f42);
+}

@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Discord Message Hider",
+  "version": "0.1.0",
+  "description": "Hide individual Discord messages locally, replace hidden quoted/replied content, and manage an exportable history.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://discord.com/*"],
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "action": {
+    "default_title": "Discord Message Hider",
+    "default_popup": "popup.html"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://discord.com/channels/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Discord Message Hider</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <h1>Discord Message Hider</h1>
+    <p class="count"><span id="count">0</span>件のメッセージを非表示中</p>
+
+    <fieldset>
+      <legend>通常の非表示メッセージ</legend>
+      <label>
+        <input type="radio" name="display" value="none">
+        完全に非表示
+      </label>
+      <label>
+        <input type="radio" name="display" value="placeholder">
+        「[非表示の発言]」と表示
+      </label>
+    </fieldset>
+
+    <button id="open-options" class="primary" type="button">非表示メッセージを管理</button>
+    <p class="hint">引用・返信プレビューは常に「[非表示の発言]」へ置換します。</p>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
