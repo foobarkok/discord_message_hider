@@ -13,7 +13,6 @@
   const visibleCount = document.getElementById("visible-count");
   const totalCount = document.getElementById("total-count");
   const unhideSelected = document.getElementById("unhide-selected");
-  const clearAll = document.getElementById("clear-all");
   const template = document.getElementById("message-template");
 
   init().catch((error) => showError(error));
@@ -56,15 +55,6 @@
       renderList();
     });
 
-    clearAll.addEventListener("click", async () => {
-      const count = Object.keys(state.messages || {}).length;
-      if (!count) return;
-      const confirmed = window.confirm(`非表示リストの${count}件をすべて解除しますか？`);
-      if (!confirmed) return;
-      const response = await sendMessage({ type: "CLEAR_ALL" });
-      if (response?.ok) state = response.state;
-      renderList();
-    });
 
     document.getElementById("export").addEventListener("click", exportJson);
     document.getElementById("import").addEventListener("click", () => {
@@ -86,7 +76,6 @@
     const total = Object.keys(state.messages || {}).length;
     totalCount.textContent = String(total);
     visibleCount.textContent = String(records.length);
-    clearAll.disabled = total === 0;
     unhideSelected.disabled = records.length === 0;
 
     if (!records.length) {
