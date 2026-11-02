@@ -99,6 +99,208 @@
     });
   }
 
+  function isLinkedToPreviousAuthor(previous, current) {
+    // 直前のメッセージに含まれるユーザー名要素のID
+    const previousUsername = previous.querySelector(
+      '[id^="message-username-"]'
+    );
+
+    if (!previousUsername?.id) return false;
+
+    // 現在のメッセージ、または内部のarticle要素のaria-labelledby
+    const labelledElement = current.matches("[aria-labelledby]")
+      ? current
+      : current.querySelector("[aria-labelledby]");
+
+    if (!labelledElement) return false;
+
+    const labelledBy = (
+      labelledElement.getAttribute("aria-labelledby") || ""
+    ).split(/\s+/);
+
+    return labelledBy.includes(previousUsername.id);
+  }
+
+  function sameAuthor(a, b) {
+    if (a.authorId && b.authorId) {
+      return a.authorId === b.authorId;
+    }
+
+    if (
+      a.authorName &&
+      b.authorName &&
+      a.authorName !== "不明なユーザー" &&
+      b.authorName !== "不明なユーザー"
+    ) {
+      return a.authorName === b.authorName;
+    }
+
+    return false;
+  }
+
+  function getDiscordMessageLayoutNode(row) {
+    return row.querySelector(
+      '[class*="compact"], [class*="cozyMessage"], [class*="cozy"]'
+    );
+  }
+
+  function findCozyClass(current, messageNodes) {
+    const currentIndex = messageNodes.indexOf(current);
+
+    for (let distance = 1; distance < messageNodes.length; distance += 1) {
+      for (const index of [
+        currentIndex - distance,
+        currentIndex + distance
+      ]) {
+        if (index < 0 || index >= messageNodes.length) continue;
+
+        const candidate = messageNodes[index];
+        const layoutNode = getDiscordMessageLayoutNode(candidate);
+        if (!layoutNode) continue;
+
+        const cozy = Array.from(layoutNode.classList).find(
+          (name) => name.toLowerCase().includes("cozy")
+        );
+
+        if (cozy) return cozy;
+      }
+    }
+
+    return null;
+  }
+
+  function updateCompactMessagesAfterHidden(messageNodes, hiddenIds) {
+    // 以前の変更を解除してから再判定
+    for (const node of messageNodes) {
+      node.classList.remove("dmh-promoted-cozy");
+
+      const inner = getDiscordMessageLayoutNode(node);
+      if (inner) inner.classList.remove("dmh-promoted-cozy");
+    }
+
+    for (let i = 1; i < messageNodes.length; i += 1) {
+      const previous = messageNodes[i - 1];
+      const current = messageNodes[i];
+
+      const previousInfo = getMessageInfo(previous);
+      const currentInfo = getMessageInfo(current);
+
+      if (!previousInfo?.id || !hiddenIds.has(previousInfo.id)) continue;
+      if (!sameAuthor(previousInfo, currentInfo)) continue;
+
+      const layoutNode = getDiscordMessageLayoutNode(current);
+      if (!layoutNode) continue;
+
+      const classes = Array.from(layoutNode.classList);
+      const compactClass = classes.find(
+        (name) => name.toLowerCase().includes("compact")
+      );
+
+      if (!compactClass) continue;
+
+      const cozyClass = findCozyClass(current, messageNodes);
+
+      if (cozyClass) {
+        layoutNode.classList.remove(compactClass);
+        layoutNode.classList.add(cozyClass, "dmh-promoted-cozy");
+        current.classList.add("dmh-promoted-cozy");
+      }
+    }
+  }
+
+  function findAuthorNode(messageElement) {
+    const selectors = [
+      '[id^="message-username-"]',
+      '[class*="username"]',
+      '[class*="headerText"]',
+      '[class*="header-text"]',
+      'h3 span[role="button"]',
+      'h3 span'
+    ];
+
+    for (const selector of selectors) {
+      const node = messageElement.querySelector(selector);
+      if (node && cleanSingleLine(node.textContent || "")) {
+        return node;
+      }
+    }
+
+    return null;
+  }
+
+  function findAvatarNode(messageElement) {
+    const selectors = [
+      'img[class*="avatar"]',
+      '[class*="avatar"] img',
+      'img[src*="/avatars/"]',
+      'img[src*="/users/"]'
+    ];
+
+    for (const selector of selectors) {
+      const node = messageElement.querySelector(selector);
+      if (node instanceof HTMLImageElement && node.src) {
+        return node;
+      }
+    }
+
+    return null;
+  }
+
+  function updateMissingGroupedMessageHeaders(messageNodes, hiddenIds) {
+    document.querySelectorAll(".dmh-synthetic-author-header")
+      .forEach((node) => node.remove());
+
+    for (let i = 1; i < messageNodes.length; i += 1) {
+      const previous = messageNodes[i - 1];
+      const current = messageNodes[i];
+
+      const previousInfo = getMessageInfo(previous);
+      const currentInfo = getMessageInfo(current);
+
+      if (!previousInfo?.id || !hiddenIds.has(previousInfo.id)) continue;
+      if (
+        !sameAuthor(previousInfo, currentInfo) &&
+        !isLinkedToPreviousAuthor(previous, current)
+      ) {
+        continue;
+      }
+
+      const contentNode = findMessageContentNode(current, currentInfo.id);
+      if (!contentNode) continue;
+
+      const authorNode = findAuthorNode(previous);
+      const avatarNode = findAvatarNode(previous);
+      const authorName =
+        previousInfo.authorName ||
+        cleanSingleLine(authorNode?.textContent || "");
+
+      if (!authorName && !avatarNode) continue;
+
+      const header = document.createElement("div");
+      header.className = "dmh-synthetic-author-header";
+      header.setAttribute("aria-hidden", "true");
+
+      if (avatarNode) {
+        const avatar = avatarNode.cloneNode(true);
+        avatar.removeAttribute("id");
+        avatar.classList.add("dmh-synthetic-avatar");
+        avatar.setAttribute("alt", "");
+        avatar.setAttribute("aria-hidden", "true");
+        avatar.removeAttribute("srcset");
+        header.appendChild(avatar);
+      }
+
+      if (authorName) {
+        const name = document.createElement("span");
+        name.className = "dmh-synthetic-author-name";
+        name.textContent = authorName;
+        header.appendChild(name);
+      }
+
+      contentNode.parentElement?.insertBefore(header, contentNode);
+    }
+  }
+
   function applyCurrentState() {
     const messageNodes = getAllMessageContainers();
     const hiddenIds = new Set(Object.keys(state.messages || {}));
@@ -117,8 +319,9 @@
       updateQuoteReferences(element);
     }
 
-    // Discord may render quote/reference previews outside the current message
-    // element in some UI states. Scan likely reference containers too.
+    updateCompactMessagesAfterHidden(messageNodes, hiddenIds);
+    updateMissingGroupedMessageHeaders(messageNodes, hiddenIds);
+
     for (const quote of getPotentialQuoteContainers()) {
       updateQuoteContainer(quote, findReferenceId(quote, null));
     }
