@@ -417,7 +417,6 @@
     container.classList.toggle("dmh-quote-hidden", shouldHide);
     container.dataset.dmhReferenceId = referenceId || "";
   }
-
   function injectContextMenu() {
     const menu = document.createElement("div");
     menu.id = CONTEXT_MENU_ID;
@@ -431,8 +430,14 @@
   }
 
   function onContextMenu(event) {
-    const messageElement = findMessageContainer(event.target);
-    if (!messageElement) return;
+    // Only handle context menus originating from an actual Discord message row.
+    // Other Discord UI (channels, rooms, categories, server list, etc.) must
+    // retain its native context menu.
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) return;
+
+    const messageElement = findMessageContainer(target);
+    if (!messageElement || !isMessageContextTarget(target, messageElement)) return;
 
     const info = getMessageInfo(messageElement);
     if (!info?.id) return;
@@ -454,6 +459,14 @@
     menu.style.left = `${Math.max(4, x)}px`;
     menu.style.top = `${Math.max(4, y)}px`;
     menu.hidden = false;
+  }
+
+  function isMessageContextTarget(target, messageElement) {
+    // Discord message rows are identified by the chat-messages-* marker.
+    const row = target.closest(
+      'li[id^="chat-messages-"], [id^="chat-messages-"], [data-list-item-id^="chat-messages-"]'
+    );
+    return Boolean(row && (row === messageElement || row.contains(messageElement)));
   }
 
   function onDocumentClick(event) {
