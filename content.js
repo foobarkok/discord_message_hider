@@ -216,21 +216,70 @@
     const selectors = [
       '[id^="message-username-"]',
       '[class*="username"]',
+      '[class*="headerText"]',
+      '[class*="header-text"]',
+      'h3 [data-text-variant]',
       'h3 span[role="button"]',
       'h3 span',
       'h2 span'
     ];
 
     for (const selector of selectors) {
-      const node = element.querySelector(selector);
-      const name = cleanSingleLine(node?.textContent || "");
-      if (name) {
-        const id = node?.getAttribute("data-user-id") || findUserIdFromElement(node) || "";
-        return { id, name };
+      const nodes = element.querySelectorAll(selector);
+
+      for (const node of nodes) {
+        const name = cleanSingleLine(
+          node.textContent ||
+          node.getAttribute("aria-label") ||
+          node.getAttribute("data-text") ||
+          ""
+        );
+
+        if (
+          name &&
+          name !== "(unknown user)" &&
+          !name.includes("Bot") &&
+          !/^\d+$/.test(name)
+        ) {
+          const id =
+            node.getAttribute("data-user-id") ||
+            findUserIdFromElement(node) ||
+            "";
+
+          return { id, name };
+        }
       }
     }
 
-    return { id: "", name: "" };
+    // Discordのアクセシビリティ情報から取得を試みる
+    const ariaNodes = element.querySelectorAll("[aria-label]");
+    for (const node of ariaNodes) {
+      const label = cleanSingleLine(node.getAttribute("aria-label") || "");
+
+      const match = label.match(
+        /^(.+?)(?:,\s*(?:BOT|bot))?(?:\s*,\s*(?:edited|編集済み))?$/
+      );
+
+      if (match && match[1] && match[1].length < 100) {
+        const name = match[1].trim();
+
+        if (
+          name &&
+          name !== "(unknown user)" &&
+          !/^\d+$/.test(name)
+        ) {
+          return {
+            id: findUserIdFromElement(node) || "",
+            name
+          };
+        }
+      }
+    }
+
+    return {
+      id: "",
+      name: "不明なユーザー"
+    };
   }
 
   function findUserIdFromElement(node) {
